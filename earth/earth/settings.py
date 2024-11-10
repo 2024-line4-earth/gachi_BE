@@ -24,11 +24,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # 환경변수 세팅 secret_key
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(
-    env_file=os.path.join(BASE_DIR, '.env')
-)
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = 'Set the {} environment variable'.format(var_name)
+        raise ImproperlyConfigured(error_msg)
 
+SECRET_KEY = get_env_variable('DJANGO_SECRET')
+
+DEBUG = True
 
 # 배포
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".cloudtype.app"]
