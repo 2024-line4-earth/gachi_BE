@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# 환경변수 세팅 secret_key
+# 환경변수 세팅
 def get_env_variable(var_name):
     try:
         return os.environ[var_name]
@@ -32,6 +32,18 @@ def get_env_variable(var_name):
         raise ImproperlyConfigured(error_msg)
 
 SECRET_KEY = get_env_variable('DJANGO_SECRET')
+
+AWS_ACCESS_KEY_ID =  get_env_variable('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY =  get_env_variable('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME =  get_env_variable('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME =  get_env_variable('AWS_S3_REGION_NAME')
+
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_DEFAULT_ACL = None
+
+# S3 버킷을 기본 스토리지로 설정
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 
 DEBUG = True
 
@@ -180,17 +192,3 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),  # 액세스 토큰의 만료 시간
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # 리프레시 토큰의 만료 시간
 }
-
-# .env 파일을 로드
-load_dotenv()
-
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
-
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-AWS_DEFAULT_ACL = None
-
-# S3 버킷을 기본 스토리지로 설정
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
