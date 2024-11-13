@@ -55,7 +55,19 @@ class ItemDetailAPIView(APIView):
         item = get_object_or_404(Item, id=pk)
         serializer = PurchaseSerializer(data=request.data, context={'request': request})
 
+        user = request.user
+        user_point = user.points  # 사용자의 포인트 확인
+        item_price = item.price  # 아이템의 비용
+
+        if user_point < item_price:
+            # 포인트가 부족한 경우
+            return Response({"message": "포인트가 부족합니다."}, status=status.HTTP_202_ACCEPTED)
+        
         if serializer.is_valid():
+            # 이미 구매한 경우
+            if Purchase.objects.filter(user=user, item=item).exists():
+                return Response({"message": "이미 구매한 아이템입니다."}, status=status.HTTP_202_ACCEPTED)
+            
             serializer.save(item=item)  # 아이템을 시리얼라이저에 추가
             return Response({"message": "구매가 완료되었습니다."}, status=status.HTTP_201_CREATED)
         
