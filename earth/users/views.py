@@ -97,7 +97,14 @@ class UpdateProfileView(generics.RetrieveAPIView):
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()  # user 인스턴스 가져오기
         serializer = self.get_serializer(instance, data=request.data, partial=True)  # PATCH 요청 처리
-        serializer.is_valid(raise_exception=True)  # 유효성 검사
+        
+        # 유효성 검사
+        if not serializer.is_valid():
+            return Response({
+                "errors": serializer.errors,
+                "message": "프로필 업데이트에 실패했습니다."
+            }, status=status.HTTP_200_OK)
+
         serializer.save()  # 데이터 저장
         return Response({"username": serializer.data['username']})  # 업데이트된 닉네임 반환
 
