@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from django.http import FileResponse # 파일 다운로드
 from rest_framework.permissions import IsAuthenticated
-
+from django.core.files.storage import default_storage
 from .models import *
 from .serializers import *
 from users.models import User
@@ -78,6 +78,30 @@ class ItemDownloadView(APIView):
     def get(self, request, pk):
         try:
             item = Item.objects.get(pk=pk)
+            file_name = item.item_image.name  # 파일 이름
+            file_url = item.item_image.url  # S3의 URL
+
+            # S3 URL에서 파일을 가져오기
+            response = FileResponse(default_storage.open(file_name, 'rb'), as_attachment=True, filename=file_name)
+
+            # 이미지의 확장자에 따라 Content-Type 설정
+            if file_name.endswith('.png'):
+                response['Content-Type'] = 'image/png'
+            else:
+                response['Content-Type'] = 'image/jpeg'
+
+            return response
+        except Item.DoesNotExist:
+            return Response({"error": "아이템을 찾을 수 없습니다."}, status=202)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+"""
+# 아이템 다운로드
+class ItemDownloadView(APIView):
+    def get(self, request, pk):
+        try:
+            item = Item.objects.get(pk=pk)
             file_path = item.item_image.path  # 이미지 파일의 경로
             response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=item.item_image.name)
 
@@ -92,3 +116,4 @@ class ItemDownloadView(APIView):
             return Response({"error": "아이템을 찾을 수 없습니다."}, status=404)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+"""
