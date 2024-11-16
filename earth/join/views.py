@@ -37,7 +37,7 @@ class CardPostView(APIView):
         profile, created =  UserProfile.objects.get_or_create(user = request.user)
 
         if not profile.tutorial_completed:
-            return Response({"message": "튜토리얼을 완료해야 카드 작성이 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"message": "튜토리얼을 완료해야 카드 작성이 가능합니다."}, status=status.HTTP_202_ACCEPTED)
         
         serializer = CardPostSerializer(data = request.data)
         if serializer.is_valid():
@@ -64,19 +64,19 @@ class FrameSelection(APIView):
     def get(self, request):
         cardpost_id = request.query_params.get("cardpost_id")  # cardpost_id를 쿼리 파라미터로 받아옴
         if not cardpost_id:
-            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_202_ACCEPTED)
+            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # CardPost 객체 확인
         cardpost = get_object_or_404(CardPost, id=cardpost_id)
 
         # Frame 객체 가져오기 또는 생성
         frame, created = Frame.objects.get_or_create(user=request.user, cardpost=cardpost)
-
-        # 프레임이 새로 생성되었다면 is_finalized를 True로 설정
+        
+        # frame이 새로 생성되었다면 필드를 true로 변환
         if created:
             cardpost.is_finalized = True
             cardpost.save()
-            
+        
         serializer = FrameSerializer(frame)
 
         # 유저가 구매한 프레임 목록 확인
@@ -215,7 +215,24 @@ class PostListAPIView(generics.ListAPIView):
                 queryset = CardPost.objects.none()
 
         return queryset
- 
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # 관련된 이미지 URL 가져오기
+        photos = Photo.objects.filter(card_post__in=queryset)
+        image_urls = [
+            {
+                "image_url": request.build_absolute_uri(photo.decorated_image.url)
+            }
+            for photo in photos if photo.decorated_image
+        ]
+
+        # 이미지 URL만 반환
+        return Response({
+            "images": image_urls  # 이미지 URL 목록 반환
+        })
+
 # 조인페이지에 토글반환('')
 class JoinView(APIView):
     permission_classes = [IsAuthenticated]
