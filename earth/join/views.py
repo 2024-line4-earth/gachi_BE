@@ -64,7 +64,7 @@ class FrameSelection(APIView):
     def get(self, request):
         cardpost_id = request.query_params.get("cardpost_id")  # cardpost_id를 쿼리 파라미터로 받아옴
         if not cardpost_id:
-            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_202_ACCEPTED)
 
         # CardPost 객체 확인
         cardpost = get_object_or_404(CardPost, id=cardpost_id)
