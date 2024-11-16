@@ -81,13 +81,18 @@ class FrameSelection(APIView):
 
         # 유저가 구매한 프레임 목록 확인
         purchased_items = Purchase.objects.filter(user=request.user)
-        purchased_frames = [purchase.item.item_name for purchase in purchased_items if purchase.item.item_type == 'frame']
+        purchased_frames = [
+            {
+                "frame_name": purchase.item.item_name,
+                "image": purchase.item.item_image.url  # 이미지 URL 추가
+            }
+            for purchase in purchased_items if purchase.item.item_type == 'frame'
+        ]
 
-        # 프레임 목록과 카드 상태를 포함한 응답 데이터 구성
         response_data = {
-            "frame": serializer.data,  # 선택된 프레임 정보
-            "purchased_frames": [{"frame_name": frame_name} for frame_name in purchased_frames],  # 구매한 프레임 목록
-            "is_finalized": cardpost.is_finalized  # 카드의 완료 상태
+            "frame": serializer.data,
+            "purchased_frames": purchased_frames,
+            "is_finalized": cardpost.is_finalized
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
