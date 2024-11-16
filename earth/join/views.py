@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404, redirect
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics
 from market.models import Purchase
+from django.http import FileResponse
+from django.core.files.storage import default_storage
 
 #튜토리얼 뷰
 class TutorialView(APIView):
@@ -157,10 +159,34 @@ class CompletedView(APIView):
             request.user.save()
             return Response({
                 "message": "이미지가 저장되었습니다.",
-                "image_url": photo.decorated_image.url  # S3 URL 반환
+                "image_url": photo.decorated_image.url,  # S3 URL 반환
+                "photo_id": photo.id
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 이미지 다운로드
+class ImageDownloadView(APIView):
+    def get(self, request, pk):
+        try:
+            photo = Photo.objects.get(pk=pk)
+            file_name = photo.decorated_image.name  # 파일 이름
+            file_url = photo.decorated_image.url  # S3의 URL
+            
+            # S3 URL에서 파일을 가져오기
+            response = FileResponse(default_storage.open(file_name, 'rb'), as_attachment=True, filename=file_name)
+
+            # 이미지의 확장자에 따라 Content-Type 설정
+            if file_name.endswith('.png'):
+                response['Content-Type'] = 'image/png'
+            else:
+                response['Content-Type'] = 'image/jpeg'
+
+            return response
+        except Photo.DoesNotExist:
+            return Response({"error": "이미지를 찾을 수 없습니다."}, status=202)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
     
 # Instagram 스토리 공유
 class ImageShareView(APIView):
