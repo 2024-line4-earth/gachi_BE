@@ -1,5 +1,3 @@
-# gachi_BE
-
 <h1>환경보호, 공유를 통해 해보지 않을래? : Join us, earth.</h1>
 
 <div align=center>
