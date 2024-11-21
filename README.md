@@ -9,7 +9,7 @@
 </div>
 <p>
 <br>
-### 👍🏻 팀원 
+<h4>👍🏻 팀원 </h4>
 <h2>🦁 백엔드 🦁</h2>
 
 <table border="" cellspacing="0" cellpadding="0" width="50%">
