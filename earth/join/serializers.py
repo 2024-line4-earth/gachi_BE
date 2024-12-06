@@ -53,7 +53,6 @@ class CardPostSerializer(serializers.ModelSerializer):
 
         return card_post
         
-# 수정 !!!!!!!!!
 # 프레임 시리얼라이저
 class FrameSerializer(serializers.ModelSerializer):
     class Meta:

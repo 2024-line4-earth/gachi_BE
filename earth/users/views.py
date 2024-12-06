@@ -17,7 +17,6 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from .renderers import UserJSONRenderer
 from .forms import *
 from market.models import Item, Purchase
-# 수정 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # 토큰 발급받도록 뷰 변경
@@ -47,7 +46,6 @@ class RegisterView(generics.CreateAPIView):
             "message": "회원가입에 실패했습니다."
         }, status=status.HTTP_200_OK)
 
-# 수정!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # 로그인 뷰
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
@@ -137,7 +135,7 @@ class OrderListView(ListAPIView):
         # 현재 로그인한 사용자의 구매 내역을 반환
         return Purchase.objects.filter(user=self.request.user)
 
-# 수정 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # 테마 조회, 변경
 class UserThemeView(APIView):
     permission_classes = [IsAuthenticated]

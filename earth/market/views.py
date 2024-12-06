@@ -5,9 +5,7 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from django.http import FileResponse # 파일 다운로드
 from rest_framework.permissions import IsAuthenticated
-# 수정 !!!!!!!!!!!!!1
 from django.core.files.storage import default_storage
-
 from .models import *
 from .serializers import *
 from users.models import User
@@ -33,7 +31,6 @@ class MarketAPIView(APIView):
             "points": user_point_serializer.data
             }, status=status.HTTP_200_OK)
 
-# 수정!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 # 아이템 디테일
 class ItemDetailAPIView(APIView):
     permission_class = [IsAuthenticated]
@@ -76,7 +73,6 @@ class ItemDetailAPIView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#"""
 # 아이템 다운로드
 class ItemDownloadView(APIView):
     def get(self, request, pk):

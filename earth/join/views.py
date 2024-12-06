@@ -7,7 +7,6 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics
-# 수정 !!!!!!!!!!!!!111111111
 from market.models import Purchase
 from django.http import FileResponse
 from django.core.files.storage import default_storage
@@ -58,8 +57,7 @@ class CardPostView(APIView):
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# 수정!!!!!!!!!!!!!!!!!!!!
+    
 # 프레임 선택 페이지 뷰 /join/frame_selection/
 class FrameSelection(APIView):
     permission_classes = [IsAuthenticated]
@@ -68,7 +66,7 @@ class FrameSelection(APIView):
     def get(self, request):
         cardpost_id = request.query_params.get("cardpost_id")  # cardpost_id를 쿼리 파라미터로 받아옴
         if not cardpost_id:
-            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_202_ACCEPTED)
+            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # CardPost 객체 확인
         cardpost = get_object_or_404(CardPost, id=cardpost_id)
@@ -95,7 +93,7 @@ class FrameSelection(APIView):
 
         response_data = {
             "frame": serializer.data,
-            "purchased_frames": purchased_frames,  # 수정된 부분
+            "purchased_frames": purchased_frames,
             "is_finalized": cardpost.is_finalized
         }
 
@@ -127,7 +125,6 @@ class FrameSelection(APIView):
                 "redirect_url": "/join/completed/"
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
         """
 #----------------------실천카드 완성-----------------------
 # 이미지 저장단계 /join/completed/
@@ -168,6 +165,7 @@ class CompletedView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# 이미지 다운로드
 class ImageDownloadView(APIView):
     def get(self, request, pk):
         try:
@@ -189,7 +187,7 @@ class ImageDownloadView(APIView):
             return Response({"error": "이미지를 찾을 수 없습니다."}, status=202)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
-
+    
 # Instagram 스토리 공유
 class ImageShareView(APIView):
     permission_classes = [IsAuthenticated]
