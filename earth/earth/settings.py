@@ -140,7 +140,10 @@ DATABASES = {
         'USER': DBUSER,
         'PASSWORD': DBPASSWORD, 
         'HOST': DBHOST, 
-        'PORT': DBPORT
+        'PORT': DBPORT,
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 
