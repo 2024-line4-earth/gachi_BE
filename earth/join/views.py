@@ -7,6 +7,10 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import generics
+# 수정 !!!!!!!!!!!!!111111111
+from market.models import Purchase
+from django.http import FileResponse
+from django.core.files.storage import default_storage
 
 #튜토리얼 뷰
 class TutorialView(APIView):
@@ -36,7 +40,7 @@ class CardPostView(APIView):
         profile, created =  UserProfile.objects.get_or_create(user = request.user)
 
         if not profile.tutorial_completed:
-            return Response({"message": "튜토리얼을 완료해야 카드 작성이 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"message": "튜토리얼을 완료해야 카드 작성이 가능합니다."}, status=status.HTTP_202_ACCEPTED)
         
         serializer = CardPostSerializer(data = request.data)
         if serializer.is_valid():
@@ -54,20 +58,50 @@ class CardPostView(APIView):
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+# 수정!!!!!!!!!!!!!!!!!!!!
 # 프레임 선택 페이지 뷰 /join/frame_selection/
 class FrameSelection(APIView):
     permission_classes = [IsAuthenticated]
 
-    # 유저가 프레임을 골랐는지 확인
+    # 유저가 프레임을 골랐는지 확인(+프레임 형태 반환 및 카드 상태 확인)
     def get(self, request):
         cardpost_id = request.query_params.get("cardpost_id")  # cardpost_id를 쿼리 파라미터로 받아옴
+        if not cardpost_id:
+            return Response({"message": "cardpost_id가 필요합니다."}, status=status.HTTP_202_ACCEPTED)
+
+        # CardPost 객체 확인
         cardpost = get_object_or_404(CardPost, id=cardpost_id)
 
+        # Frame 객체 가져오기 또는 생성
         frame, created = Frame.objects.get_or_create(user=request.user, cardpost=cardpost)
+        
+        # frame이 새로 생성되었다면 필드를 true로 변환
+        if created:
+            cardpost.is_finalized = True
+            cardpost.save()
+        
         serializer = FrameSerializer(frame)
-        return Response(serializer.data)
+
+        # 유저가 구매한 프레임 목록 확인
+        purchased_items = Purchase.objects.filter(user=request.user)
+        purchased_frames = [
+            {
+                "frame_name": purchase.item.item_name,
+                "image": purchase.item.item_image.url  # 이미지 URL 추가
+            }
+            for purchase in purchased_items if purchase.item.item_type == 'frame'
+        ]
+
+        response_data = {
+            "frame": serializer.data,
+            "purchased_frames": purchased_frames,  # 수정된 부분
+            "is_finalized": cardpost.is_finalized
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
     
+    """
     # 프레임 고르면
     def post(self, request):
         cardpost_id = request.data.get("cardpost_id")  # request body1
@@ -93,6 +127,8 @@ class FrameSelection(APIView):
                 "redirect_url": "/join/completed/"
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        """
 #----------------------실천카드 완성-----------------------
 # 이미지 저장단계 /join/completed/
 class CompletedView(APIView):
@@ -126,11 +162,34 @@ class CompletedView(APIView):
             request.user.save()
             return Response({
                 "message": "이미지가 저장되었습니다.",
-                "image_url": photo.decorated_image.url  # S3 URL 반환
+                "image_url": photo.decorated_image.url,  # S3 URL 반환
+                "photo_id": photo.id
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+class ImageDownloadView(APIView):
+    def get(self, request, pk):
+        try:
+            photo = Photo.objects.get(pk=pk)
+            file_name = photo.decorated_image.name  # 파일 이름
+            file_url = photo.decorated_image.url  # S3의 URL
+            
+            # S3 URL에서 파일을 가져오기
+            response = FileResponse(default_storage.open(file_name, 'rb'), as_attachment=True, filename=file_name)
+
+            # 이미지의 확장자에 따라 Content-Type 설정
+            if file_name.endswith('.png'):
+                response['Content-Type'] = 'image/png'
+            else:
+                response['Content-Type'] = 'image/jpeg'
+
+            return response
+        except Photo.DoesNotExist:
+            return Response({"error": "이미지를 찾을 수 없습니다."}, status=202)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
 # Instagram 스토리 공유
 class ImageShareView(APIView):
     permission_classes = [IsAuthenticated]
@@ -189,7 +248,24 @@ class PostListAPIView(generics.ListAPIView):
                 queryset = CardPost.objects.none()
 
         return queryset
- 
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # 관련된 이미지 URL 가져오기
+        photos = Photo.objects.filter(card_post__in=queryset)
+        image_urls = [
+            {
+                "image_url": request.build_absolute_uri(photo.decorated_image.url)
+            }
+            for photo in photos if photo.decorated_image
+        ]
+
+        # 이미지 URL만 반환
+        return Response({
+            "images": image_urls  # 이미지 URL 목록 반환
+        })
+
 # 조인페이지에 토글반환('')
 class JoinView(APIView):
     permission_classes = [IsAuthenticated]
