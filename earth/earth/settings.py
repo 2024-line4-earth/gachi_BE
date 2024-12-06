@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+# 배포용
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -124,10 +124,23 @@ WSGI_APPLICATION = 'earth.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DBNAME = get_env_variable('DBNAME')
+DBUSER = get_env_variable('DBUSER')
+DBPASSWORD = get_env_variable('DBPASSWORD')
+DBHOST = get_env_variable('DBHOST')
+DBPORT = get_env_variable('DBPORT')
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': BASE_DIR / 'db.sqlite3',
+
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': DBNAME,
+        'USER': DBUSER,
+        'PASSWORD': DBPASSWORD, 
+        'HOST': DBHOST, 
+        'PORT': DBPORT
     }
 }
 
